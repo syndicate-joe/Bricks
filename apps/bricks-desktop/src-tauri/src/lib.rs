@@ -103,6 +103,7 @@ pub fn run() {
             commands::agent_file::reveal_agent_file,
             // Reader of the conversation: windows of the files it names (Sprint 14.6.2)
             commands::reader_file::reader_file_read,
+            commands::reader_file::reader_file_reveal,
             // Provider/model editing
             commands::providers::providers_config,
             commands::providers::provider_update,

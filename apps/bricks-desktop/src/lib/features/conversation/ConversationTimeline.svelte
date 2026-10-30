@@ -8,7 +8,8 @@
   import QuestionCard from './timeline/QuestionCard.svelte'
   import SkillsTrustBanner from './timeline/SkillsTrustBanner.svelte'
   import TimelineEntry from './timeline/TimelineEntry.svelte'
-  import WorkingLine from './timeline/WorkingLine.svelte'
+  import WorkBlock from './timeline/WorkBlock.svelte'
+  import { timelineBlocks } from './runBlocks'
 
   let { conversation }: { conversation: Conversation } = $props()
 
@@ -27,6 +28,14 @@
 
   const hiddenCount = $derived(Math.max(0, conversation.items.length - limit))
   const visible = $derived(hiddenCount > 0 ? conversation.items.slice(hiddenCount) : conversation.items)
+  const blocks = $derived(
+    timelineBlocks(visible, conversation.items, conversation.runs, conversation.runningRunId),
+  )
+  /** The run at work has no block when none of its items is in the view (it started elsewhere). */
+  const runningWithoutBlock = $derived(
+    conversation.runningRunId !== null &&
+      !blocks.some((block) => block.kind === 'work' && block.runId === conversation.runningRunId),
+  )
 
   /** Waiting approvals with no card in the timeline (e.g. after a reload). */
   const orphanApprovals = $derived(
@@ -196,8 +205,12 @@
         </div>
       {/if}
 
-      {#each visible as item (item.id)}
-        <TimelineEntry {item} {conversation} />
+      {#each blocks as block (block.key)}
+        {#if block.kind === 'work'}
+          <WorkBlock {conversation} runId={block.runId} items={block.items} answerReasoning={block.answerReasoning} />
+        {:else}
+          <TimelineEntry item={block.item} {conversation} answer={block.answer} />
+        {/if}
       {/each}
 
       {#each orphanApprovals as approval (approval.approval_id)}
@@ -208,9 +221,9 @@
         <QuestionCard {question} {conversation} />
       {/each}
 
-      <!-- A running run whose message is not in the view (it started elsewhere): its time goes last. -->
-      {#if conversation.running && !conversation.items.some((i) => i.kind === 'user' && i.runId === conversation.runningRunId)}
-        <WorkingLine {conversation} />
+      <!-- A running run with nothing in the view (it started elsewhere): its bar goes last. -->
+      {#if runningWithoutBlock && conversation.runningRunId}
+        <WorkBlock {conversation} runId={conversation.runningRunId} items={[]} />
       {/if}
 
       {#if conversation.skillsTrust}

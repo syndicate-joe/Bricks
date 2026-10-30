@@ -10,6 +10,7 @@
   import TopBar from '$lib/layout/TopBar.svelte'
   import EmptyState from '$lib/layout/EmptyState.svelte'
   import type { ShellLayout } from '$lib/layout/types'
+  import StartSplash from '$lib/layout/StartSplash.svelte'
   import { initTheme, setTheme, theme } from '$lib/theme/theme.svelte'
   import { appIconShow } from '$lib/ipc/client'
   import { app } from '$lib/state/app.svelte'
@@ -69,7 +70,8 @@
   })
 
   onMount(() => {
-    const disposeTheme = initTheme('system')
+    // The theme last shown holds until the preferences say which one is chosen.
+    const disposeTheme = initTheme(theme.mode)
     const unlistenResize = watchFullscreen()
     app.init().then(() => {
       const p = app.prefs
@@ -140,7 +142,7 @@
 
 <Tooltip.Provider>
   {#if !app.ready}
-    <div class="grid h-screen place-items-center text-sm text-muted-foreground">Démarrage de Bricks…</div>
+    <StartSplash />
   {:else if app.startError}
     <div class="grid h-screen place-items-center p-6">
       <EmptyState title="Bricks n’a pas pu démarrer" description={app.startError} />
